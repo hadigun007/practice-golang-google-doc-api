@@ -7,11 +7,10 @@ import (
 	"log"
 	"net/http"
 	"os"
-	"quickstart/core"
 
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/google"
-	"google.golang.org/api/docs/v1"
+	"google.golang.org/api/drive/v3"
 	"google.golang.org/api/option"
 )
 
@@ -74,25 +73,27 @@ func main() {
 		log.Fatalf("Unable to read client secret file: %v", err)
 	}
 
-	fmt.Println(b)
-
 	// If modifying these scopes, delete your previously saved token.json.
-	config, err := google.ConfigFromJSON(b, "https://www.googleapis.com/auth/documents")
+	config, err := google.ConfigFromJSON(b, "https://www.googleapis.com/auth/drive")
 	if err != nil {
 		log.Fatalf("Unable to parse client secret file to config: %v", err)
 	}
-	fmt.Println(config)
+	fmt.Println(config.Endpoint)
 	client := getClient(config)
-	fmt.Println(client)
 
-	srv, err := docs.NewService(ctx, option.WithHTTPClient(client))
+	srv, err := drive.NewService(ctx, option.WithHTTPClient(client))
 	if err != nil {
 		log.Fatalf("Unable to retrieve Docs client: %v", err)
 	}
-
-	d, err := core.CreateBlankDoc(srv, "second-test")
+	data, err := srv.Files.List().Do()
 	if err != nil {
 		fmt.Println(err)
 	}
-	fmt.Println("Succes create new blank document: " + d.Title)
+	fmt.Println(data)
+
+	// d, err := core.CreateBlankDoc(srv, "second-test")
+	// if err != nil {
+	// 	fmt.Println(err)
+	// }
+	// fmt.Println("Succes create new blank document: " + d.Title)
 }
