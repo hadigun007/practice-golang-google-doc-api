@@ -1,4 +1,4 @@
-package main
+package core
 
 import (
 	"context"
@@ -14,7 +14,29 @@ import (
 	"google.golang.org/api/option"
 )
 
-// Retrieves a token, saves the token, then returns the generated client.
+var srv *drive.Service
+
+func init() {
+	ctx := context.Background()
+	b, err := os.ReadFile("credentials.json")
+	if err != nil {
+		log.Fatalf("Unable to read client secret file: %v", err)
+	}
+
+	// If modifying these scopes, delete your previously saved token.json.
+	config, err := google.ConfigFromJSON(b, "https://www.googleapis.com/auth/drive")
+	if err != nil {
+		log.Fatalf("Unable to parse client secret file to config: %v", err)
+	}
+	fmt.Println(config.Endpoint)
+	client := getClient(config)
+
+	srv, err = drive.NewService(ctx, option.WithHTTPClient(client))
+	if err != nil {
+		log.Fatalf("Unable to retrieve Docs client: %v", err)
+	}
+}
+
 func getClient(config *oauth2.Config) *http.Client {
 	tokFile := "token.json"
 	tok, err := tokenFromFile(tokFile)
@@ -66,34 +88,6 @@ func saveToken(path string, token *oauth2.Token) {
 	json.NewEncoder(f).Encode(token)
 }
 
-func main() {
-	ctx := context.Background()
-	b, err := os.ReadFile("credentials.json")
-	if err != nil {
-		log.Fatalf("Unable to read client secret file: %v", err)
-	}
-
-	// If modifying these scopes, delete your previously saved token.json.
-	config, err := google.ConfigFromJSON(b, "https://www.googleapis.com/auth/drive")
-	if err != nil {
-		log.Fatalf("Unable to parse client secret file to config: %v", err)
-	}
-	fmt.Println(config.Endpoint)
-	client := getClient(config)
-
-	srv, err := drive.NewService(ctx, option.WithHTTPClient(client))
-	if err != nil {
-		log.Fatalf("Unable to retrieve Docs client: %v", err)
-	}
-	data, err := srv.Files.List().Do()
-	if err != nil {
-		fmt.Println(err)
-	}
-	fmt.Println(data)
-
-	// d, err := core.CreateBlankDoc(srv, "second-test")
-	// if err != nil {
-	// 	fmt.Println(err)
-	// }
-	// fmt.Println("Succes create new blank document: " + d.Title)
+func GetFiles() (*drive.FileList, error) {
+	return srv.Files.List().Do()
 }
